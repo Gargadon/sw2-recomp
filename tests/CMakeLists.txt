@@ -1,0 +1,7 @@
+cmake_minimum_required(VERSION 3.25)
+project(sw2_event_tests LANGUAGES CXX)
+set(CMAKE_CXX_STANDARD 23)
+find_package(rexglue CONFIG REQUIRED)
+add_executable(event_reset_test event_reset_test.cpp)
+target_link_libraries(event_reset_test PRIVATE rex::runtime)
+rexglue_apply_target_settings(event_reset_test)

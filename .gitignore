@@ -1,0 +1,52 @@
+# Build output, copied SDK DLLs, caches and runtime data.
+/out/
+/build/
+/cmake-build-*/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+build.ninja
+.ninja_deps
+.ninja_log
+compile_commands.json
+
+# Recompiled game code: regenerate from the local game and manifest.
+# Keep generated/rexglue.cmake, which CMakeLists.txt includes directly.
+/generated/default/
+
+# Local IDE and CMake settings.
+/.vs/
+/.vscode/
+CMakeUserPresets.json
+*.user
+*.suo
+
+# Binaries, symbols and crash dumps outside the build directory.
+*.exe
+*.dll
+*.obj
+*.o
+*.lib
+*.pdb
+*.pch
+*.ilk
+*.map
+*.dmp
+
+# Runtime logs and diagnostic captures.
+logs/
+*.log
+heap-diagnostics.txt
+allocation-diagnostics.txt
+
+# Local game inputs, if copied into the project.
+*.iso
+*.xex
+/Samurai Warriors 2 (USA, Europe)/
+
+# Editor temporary files.
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db

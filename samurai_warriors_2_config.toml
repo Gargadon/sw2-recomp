@@ -1,0 +1,45 @@
+# Indirect call observed during startup (logs/samurai_warriors_2_003.log).
+# Let codegen discover the original function body from this entry point.
+[functions]
+0x82351E20 = {}
+# Next indirect call observed in logs/samurai_warriors_2_004.log.
+0x82468758 = {}
+# Indirect call observed in logs/samurai_warriors_2_005.log.
+0x8235B7F0 = {}
+
+# Observe the two free-list insertion sites without changing guest behavior.
+[[midasm_hook]]
+address = 0x8231D22C
+name = "sw2_heap_insert_first"
+registers = ["r9", "r10", "r11", "r26", "r28", "r29", "r31"]
+
+[[midasm_hook]]
+address = 0x8231D328
+name = "sw2_heap_insert_second"
+registers = ["r9", "r10", "r11", "r26", "r28", "r29", "r31"]
+
+# XMem allocation result and matching free entry, before heap mutation.
+[[midasm_hook]]
+address = 0x8231AFC8
+name = "sw2_track_allocation"
+registers = ["r30", "r29", "r31"]
+
+[[midasm_hook]]
+address = 0x8231AFD8
+name = "sw2_track_free"
+registers = ["r3", "r4"]
+
+# The game's inline KeClearEvent only clears the guest SignalState.
+# ReXGlue also maintains a host event that must be reset for the next wait.
+[[midasm_hook]]
+address = 0x82349714
+name = "sw2_clear_host_event"
+registers = ["r3"]
+after_instruction = true
+
+# Observe player-zero polling after the current button state is stored.
+[[midasm_hook]]
+address = 0x820FC38C
+name = "sw2_observe_input"
+registers = ["r31", "r3", "r11"]
+after_instruction = true
