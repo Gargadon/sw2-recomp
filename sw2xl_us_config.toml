@@ -1,0 +1,8 @@
+# Function boundaries discovered while validating SW2XL_US.dll.
+[functions]
+0x883334B0 = {}
+0x88332C50 = {}
+0x8833C248 = {}
+0x88332478 = {}
+0x884495C0 = {}
+0x8833C5F0 = {}

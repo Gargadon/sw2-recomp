@@ -1,6 +1,8 @@
 # Build output, copied SDK DLLs, caches and runtime data.
 /out/
 /build/
+/userdata/
+/cache/
 /cmake-build-*/
 CMakeFiles/
 CMakeCache.txt
@@ -12,7 +14,8 @@ compile_commands.json
 
 # Recompiled game code: regenerate from the local game and manifest.
 # Keep generated/rexglue.cmake, which CMakeLists.txt includes directly.
-/generated/default/
+/generated/*/
+!/generated/rexglue.cmake
 
 # Local IDE and CMake settings.
 /.vs/
@@ -43,6 +46,7 @@ allocation-diagnostics.txt
 *.iso
 *.xex
 /Samurai Warriors 2 (USA, Europe)/
+/Samurai Warriors 2 Title Update #3/
 
 # Editor temporary files.
 *.swp

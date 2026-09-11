@@ -5,6 +5,7 @@
 #pragma once
 
 #include <rex/rex_app.h>
+#include "dlc_installer.h"
 
 class SamuraiWarriors2App : public rex::ReXApp {
  public:
@@ -14,6 +15,14 @@ class SamuraiWarriors2App : public rex::ReXApp {
       rex::ui::WindowedAppContext& ctx) {
     return std::unique_ptr<SamuraiWarriors2App>(new SamuraiWarriors2App(ctx, "samurai_warriors_2",
         PPCImageConfig));
+  }
+
+  void OnPostSetup() override {
+    sw2_install_requested_dlc(runtime()->kernel_state());
+  }
+
+  void OnLoadXexImage(std::string& xex_image) override {
+    xex_image = "game:\\Samurai Warriors 2 Title Update #3\\default.xex";
   }
 
   // Override virtual hooks for customization:

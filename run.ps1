@@ -4,14 +4,23 @@ $exe = Join-Path $PSScriptRoot 'out\build\win-amd64-release\samurai_warriors_2.e
 if (!(Test-Path -LiteralPath $exe)) { throw 'Run build.ps1 first.' }
 $env:PATH = "$sdkRoot\bin;" + $env:PATH
 $launchArgs = @($args)
+$localUserData = Join-Path $PSScriptRoot 'userdata'
+$localCache = Join-Path $PSScriptRoot 'cache'
 # Boolean flags use --no-fullscreen, not the two tokens --fullscreen false.
 if (!($launchArgs | Where-Object { $_ -eq '--fullscreen' -or $_ -like '--fullscreen=*' -or $_ -eq '--no-fullscreen' })) {
     $launchArgs += '--no-fullscreen'
+}
+# ReXGlue's MnK driver is a synthetic Xbox 360 controller. It is merged with
+# the physical XInput pad for player one, so either device can be used.
+if (!($launchArgs | Where-Object { $_ -eq '--mnk_mode' -or $_ -like '--mnk_mode=*' -or $_ -eq '--no-mnk_mode' })) {
+    $launchArgs += '--mnk_mode'
 }
 # Explicit command-line options take precedence over these play defaults.
 $defaults = [ordered]@{
     input_backend = 'xinput'
     log_level = 'warn'
+    user_data_root = $localUserData
+    cache_root = $localCache
 }
 foreach ($option in $defaults.Keys) {
     if (!($launchArgs | Where-Object { $_ -eq "--$option" -or $_ -like "--$option=*" })) {

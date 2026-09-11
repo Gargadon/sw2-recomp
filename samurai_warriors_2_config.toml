@@ -6,6 +6,10 @@
 0x82468758 = {}
 # Indirect call observed in logs/samurai_warriors_2_005.log.
 0x8235B7F0 = {}
+# Entry point introduced/reached by Title Update 3.
+0x8231AEA0 = { parent = 0x8231AE80 }
+# Direct branch introduced by Title Update #3.
+0x82352920 = {}
 
 # Observe the two free-list insertion sites without changing guest behavior.
 [[midasm_hook]]
