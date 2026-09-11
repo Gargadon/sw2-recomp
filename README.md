@@ -121,11 +121,13 @@ The installer scans for `LIVE`, `PIRS`, and `CON` STFS containers and installs t
 
 `CMakeLists.txt` calls `rexglue_setup_target(... GPU_PLUGINS xenos)` so the Xenos plugin and its dependencies are placed beside the executable.
 
-### Event synchronization
+### Resolved: crash shortly after entering a stage
+
+The original recompilation could close roughly five seconds after entering a stage, regardless of the selected character. Investigation traced the crash to repeated audio cleanup caused by an event-state mismatch.
 
 The game clears an event by resetting its guest-memory `SignalState`, while ReXGlue also tracks a host event. A hook at `0x82349714` calls `sw2_clear_host_event` after the original instruction to synchronize both states. The implementation is in `src/event_fix.cpp` and preserves the game's original instructions.
 
-The standalone test in `tests/event_reset_test.cpp` reproduces the state mismatch, verifies `Clear()`, and exercises repeated signal-and-clear cycles.
+The standalone test in `tests/event_reset_test.cpp` reproduces the state mismatch, verifies `Clear()`, and exercises repeated signal-and-clear cycles. Playtesting of the base-game recompilation confirmed that the early-stage crash no longer occurred. The fix remains enabled in the Title Update and XL configuration; this statement does not claim separate SW2XL gameplay validation.
 
 ### Optional diagnostics
 
