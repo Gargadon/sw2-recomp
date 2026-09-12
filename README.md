@@ -100,6 +100,31 @@ The raw and merged profiles remain in `sw2-recomp/pgo` and are excluded from
 Git. Running the regular `build.ps1` later switches PGO off and produces the
 normal optimized build again.
 
+The current PGO build was trained with two raw profiles covering the executable
+and the XL module. They were merged into `pgo/sw2.profdata`, and all 149 project
+compile rules consumed the merged profile. Clang reported a few unprofiled
+launcher or unused guest-code files and one stale function record; those records
+were ignored while the remaining profile data was applied normally. The final
+PGO build was tested with working audio.
+
+Profiles are tied to the generated source that produced them. Generate new
+profiles after changing hooks, function boundaries, the title update, the XL
+dispatcher patch, or generated guest code.
+
+### Release optimization settings
+
+Release builds apply these project-level optimizations without modifying the
+installed ReXGlue SDK or `rexgpu-xenos.dll`:
+
+- `-O3` for the executable, base guest code, and XL guest code
+- `-DNDEBUG` to disable release assertions
+- ThinLTO (`-flto=thin`) during compilation and final linking
+- `/OPT:REF` and `/OPT:ICF` during linking to remove and fold unused code
+- Optional Clang instrumentation PGO through the scripts above
+
+`-march=native` is intentionally not enabled, so normal and PGO builds remain
+portable across compatible Windows AMD64 computers.
+
 Boolean options use flags such as `--fullscreen` and `--no-fullscreen`.
 
 ## Controller and keyboard input
@@ -159,11 +184,44 @@ To select another source directory:
 
 The installer scans for `LIVE`, `PIRS`, and `CON` STFS containers and installs them through ReXGlue's content manager. Installed packages remain under the configured user-data directory, and the original source packages are not modified.
 
+## Create a portable test bundle
+
+Create a self-contained private-testing directory with the executable, XL host
+module, ReXGlue runtime, Xenos plugin, game data, local saves, DLC, and cache
+layout:
+
+```powershell
+.\sw2-recomp\package.ps1
+```
+
+Use `-Zip` to also create an archive, or omit large local data selectively:
+
+```powershell
+.\sw2-recomp\package.ps1 -Zip
+.\sw2-recomp\package.ps1 -SkipGameData -SkipUserData
+```
+
+The output is written to `sw2-recomp/dist/sw2-test-bundle` and is excluded from
+Git. Deleting bundle `userdata` removes its saves and installed XL content; it
+does not remove the compiled Title Update hooks or code patches.
+
 ## Project changes
 
 ### Graphics plugin deployment
 
 `CMakeLists.txt` calls `rexglue_setup_target(... GPU_PLUGINS xenos)` so the Xenos plugin and its dependencies are placed beside the executable.
+
+The launcher forces the D3D12 RTV/DSV render-target path after direct comparison
+showed it to be substantially faster than ROV for this game. `run-rov.ps1`
+remains available for compatibility testing.
+
+### XL indirect-dispatch correction
+
+The XL function at `0x8819C710` uses a scaled jump-table index. ReXGlue emits
+unscaled switch cases for this pattern, so `patch-xl-codegen.ps1` changes the
+generated cases to `0, 4, 8, ... 32` after code generation. The corresponding
+nine destinations are documented in `sw2xl_us_config.toml`, and CMake makes the
+XL host module depend on this idempotent patch step.
 
 ### Resolved: crash shortly after entering a stage
 
@@ -171,7 +229,7 @@ The original recompilation could close roughly five seconds after entering a sta
 
 The game clears an event by resetting its guest-memory `SignalState`, while ReXGlue also tracks a host event. Hooks at `0x82113BCC` (Title Update #3) and `0x88103BE4` (SW2XL) call `sw2_clear_host_event` after the original instruction to synchronize both states. The implementation is in `src/event_fix.cpp` and preserves the game's original instructions.
 
-The standalone test in `tests/event_reset_test.cpp` reproduces the state mismatch, verifies `Clear()`, and exercises repeated signal-and-clear cycles. Playtesting of the base-game recompilation confirmed that the early-stage crash no longer occurred. The fix remains enabled in the Title Update and XL configuration; this statement does not claim separate SW2XL gameplay validation.
+The standalone test in `tests/event_reset_test.cpp` reproduces the state mismatch, verifies `Clear()`, and exercises repeated signal-and-clear cycles. Playtesting progressed from repeatable crashes within seconds to completing a full stage, and later XL gameplay also reached and ran stages with the fix enabled.
 
 ### Optional diagnostics
 
@@ -196,13 +254,17 @@ These tools collect diagnostic information. They do not remap, buffer, inject, o
 
 | File or directory | Purpose |
 | --- | --- |
-| `CMakeLists.txt` | Executable sources, Xenos deployment, and linker maps |
+| `CMakeLists.txt` | Executable sources, Xenos deployment, Release optimization, PGO modes, and linker maps |
 | `CMakePresets.json` | Windows AMD64 build presets |
 | `samurai_warriors_2_manifest.toml` | Game, Title Update, and XL module inputs |
 | `samurai_warriors_2_config.toml` | Base executable functions and hooks |
 | `sw2xl_us_config.toml` | XL module function configuration |
 | `build.ps1` | Release build launcher |
+| `build-pgo-instrumented.ps1` | Builds binaries that collect Clang PGO profiles |
+| `run-pgo-training.ps1` | Runs the instrumented game and stores per-module profiles |
+| `build-pgo-optimized.ps1` | Merges profiles and builds the PGO-optimized binaries |
 | `run.ps1` | Game launcher and local runtime-data defaults |
+| `run-rtv.ps1` / `run-rov.ps1` | Forces a D3D12 render-target path for comparison |
 | `package.ps1` | Creates a portable private-testing bundle, optionally as a ZIP |
 | `patch-xl-codegen.ps1` | Corrects scaled XL dispatch cases after code generation |
 | `install-dlc.ps1` | STFS content importer |

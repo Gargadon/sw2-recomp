@@ -11,8 +11,11 @@ if (!$rawProfiles.Count) {
     throw 'No training profiles found. Run build-pgo-instrumented.ps1 and run-pgo-training.ps1 first.'
 }
 New-Item -ItemType Directory -Path (Split-Path -Parent $mergedProfile) -Force | Out-Null
-& llvm-profdata merge -output=$mergedProfile @($rawProfiles.FullName)
+& llvm-profdata merge -o $mergedProfile @($rawProfiles.FullName)
 if ($LASTEXITCODE -ne 0) { throw 'llvm-profdata could not merge the training profiles.' }
+if (!(Test-Path -LiteralPath $mergedProfile)) {
+    throw "llvm-profdata did not create the merged profile: $mergedProfile"
+}
 
 Push-Location $PSScriptRoot
 try {
