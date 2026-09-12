@@ -36,7 +36,7 @@ registers = ["r3", "r4"]
 # The game's inline KeClearEvent only clears the guest SignalState.
 # ReXGlue also maintains a host event that must be reset for the next wait.
 [[midasm_hook]]
-address = 0x82349714
+address = 0x82113BCC
 name = "sw2_clear_host_event"
 registers = ["r3"]
 after_instruction = true

@@ -3,6 +3,10 @@
 /build/
 /userdata/
 /cache/
+/dist/
+/pgo/
+*.profraw
+*.profdata
 /cmake-build-*/
 CMakeFiles/
 CMakeCache.txt
@@ -35,6 +39,7 @@ CMakeUserPresets.json
 *.ilk
 *.map
 *.dmp
+*.etl
 
 # Runtime logs and diagnostic captures.
 logs/

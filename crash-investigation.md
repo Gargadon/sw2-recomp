@@ -14,17 +14,19 @@ other characters). Earlier missing function entries have already been registered
   (size `30C`, flags `61820006`) which was already freed.
 - The worker waits for two events, stops/releases its audio object, then calls
   `sub_82349710` to clear both events before waiting again.
-- `sub_82349710` is an inline event clear: `li r11,0; stw r11,4(r3); blr`.
+- The current Title Update #3 build contains the inline event clear at
+  `sub_82113BC8`; SW2XL contains the same sequence at `sub_88103BE0`.
   It only writes the guest dispatch header's SignalState.
 - ReXGlue XEvent waits use a separate host event. Its Clear() method resets that
   event. Clearing guest memory alone does not reset the host event.
 
 ## Change
 
-The manifest's hook at `82349714`, after the store, calls
-`sw2_clear_host_event` in `src/event_fix.cpp`. It resolves the corresponding
-XEvent through the runtime kernel and calls Clear(). Original PPC instructions
-and register values remain intact. The first eight resets are logged.
+Hooks at `82113BCC` (Title Update #3) and `88103BE4` (SW2XL), after each
+module's store, call `sw2_clear_host_event` in `src/event_fix.cpp`. It resolves
+the corresponding XEvent through the runtime kernel and calls Clear(). Original
+PPC instructions and register values remain intact. The first eight resets are
+logged.
 
 ## Validation
 

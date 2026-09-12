@@ -19,6 +19,7 @@ if (!($launchArgs | Where-Object { $_ -eq '--mnk_mode' -or $_ -like '--mnk_mode=
 $defaults = [ordered]@{
     input_backend = 'xinput'
     log_level = 'warn'
+    render_target_path_d3d12 = 'rtv'
     user_data_root = $localUserData
     cache_root = $localCache
 }

@@ -6,3 +6,31 @@
 0x88332478 = {}
 0x884495C0 = {}
 0x8833C5F0 = {}
+# Indirect stage-setup call observed after character selection.
+0x882D1508 = {}
+0x882D1520 = {}
+0x882D18C8 = {}
+
+# sub_8819C710 dispatches on the byte loaded into r10. Auto-detection followed
+# r11 (the loaded destination) and incorrectly emitted a one-entry table.
+[[switch_tables]]
+address = 0x8819C758
+register = 10
+labels = [
+    0x8819C760,
+    0x8819C798,
+    0x88198C98,
+    0x8819F6D8,
+    0x8819F710,
+    0x8819D528,
+    0x8819AD00,
+    0x881A4040,
+    0x8819C7D0,
+]
+
+# Match the guest-only inline KeClearEvent with the runtime's host XEvent.
+[[midasm_hook]]
+address = 0x88103BE4
+name = "sw2_clear_host_event"
+registers = ["r3"]
+after_instruction = true

@@ -56,6 +56,50 @@ The launcher defaults to windowed mode, XInput, keyboard emulation, `warn` loggi
 .\sw2-recomp\run.ps1 --log_level info
 ```
 
+### Comparing the D3D12 render-target paths
+
+The normal launcher explicitly selects RTV/DSV because it performs much better
+with Samurai Warriors 2 on the tested system. Two convenience launchers select
+either path for performance and graphics comparisons:
+
+```powershell
+.\sw2-recomp\run-rtv.ps1
+.\sw2-recomp\run-rov.ps1
+```
+
+ROV is generally slower in the current ReXGlue implementation, but remains
+available for diagnostics or GPUs where RTV produces rendering problems. If ROV
+is needed, launch the game with `run-rov.ps1`.
+
+### Profile-guided optimization
+
+PGO lets Clang optimize the generated guest code around paths observed during
+real gameplay. Create the instrumented build first:
+
+```powershell
+.\sw2-recomp\build-pgo-instrumented.ps1
+```
+
+Train that build with the dedicated launcher:
+
+```powershell
+.\sw2-recomp\run-pgo-training.ps1
+```
+
+During training, let the intro play, navigate representative menus, and play at
+least one busy stage with XL enabled. Exit the game normally so every loaded
+module writes its profile. The launcher may be run several times; each run adds
+another raw profile. Then merge the profiles and build the optimized version:
+
+```powershell
+.\sw2-recomp\build-pgo-optimized.ps1
+.\sw2-recomp\run.ps1
+```
+
+The raw and merged profiles remain in `sw2-recomp/pgo` and are excluded from
+Git. Running the regular `build.ps1` later switches PGO off and produces the
+normal optimized build again.
+
 Boolean options use flags such as `--fullscreen` and `--no-fullscreen`.
 
 ## Controller and keyboard input
@@ -125,7 +169,7 @@ The installer scans for `LIVE`, `PIRS`, and `CON` STFS containers and installs t
 
 The original recompilation could close roughly five seconds after entering a stage, regardless of the selected character. Investigation traced the crash to repeated audio cleanup caused by an event-state mismatch.
 
-The game clears an event by resetting its guest-memory `SignalState`, while ReXGlue also tracks a host event. A hook at `0x82349714` calls `sw2_clear_host_event` after the original instruction to synchronize both states. The implementation is in `src/event_fix.cpp` and preserves the game's original instructions.
+The game clears an event by resetting its guest-memory `SignalState`, while ReXGlue also tracks a host event. Hooks at `0x82113BCC` (Title Update #3) and `0x88103BE4` (SW2XL) call `sw2_clear_host_event` after the original instruction to synchronize both states. The implementation is in `src/event_fix.cpp` and preserves the game's original instructions.
 
 The standalone test in `tests/event_reset_test.cpp` reproduces the state mismatch, verifies `Clear()`, and exercises repeated signal-and-clear cycles. Playtesting of the base-game recompilation confirmed that the early-stage crash no longer occurred. The fix remains enabled in the Title Update and XL configuration; this statement does not claim separate SW2XL gameplay validation.
 
@@ -159,6 +203,8 @@ These tools collect diagnostic information. They do not remap, buffer, inject, o
 | `sw2xl_us_config.toml` | XL module function configuration |
 | `build.ps1` | Release build launcher |
 | `run.ps1` | Game launcher and local runtime-data defaults |
+| `package.ps1` | Creates a portable private-testing bundle, optionally as a ZIP |
+| `patch-xl-codegen.ps1` | Corrects scaled XL dispatch cases after code generation |
 | `install-dlc.ps1` | STFS content importer |
 | `src/event_fix.cpp` | Host and guest event synchronization |
 | `src/dlc_installer.cpp` | Runtime DLC installation |
