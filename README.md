@@ -1,21 +1,22 @@
-![Samurai Warriors 2 Recompiled Logo](sw2-recomp-logo.png)
+![Samurai Warriors 2: Xtreme Legends Recompiled Logo](sw2-recomp-logo.png)
 
-# Samurai Warriors 2 — ReXGlue
+# sw2xl-recomp
 
-Windows AMD64 recompilation project for **Samurai Warriors 2 (USA, Europe)** using ReXGlue SDK **0.10.0**. The current configuration builds the game with **Title Update #3** and the **Samurai Warriors 2: Xtreme Legends** module.
+Recompilación para PC de **Samurai Warriors 2: Xtreme Legends** (USA/Europe) con ReXGlue SDK 0.10.0. El proyecto arranca el juego base con **Title Update #3** y carga `SW2XL_US.dll` como módulo XL. El objetivo es jugar XL en PC; el juego base y la actualización son requisitos técnicos de esa ejecución.
 
-The original ReXGlue SDK binaries are unchanged. Project-specific fixes, diagnostics, and content setup live in this repository. Extracted game files are used as build and runtime inputs.
+Los identificadores generados `samurai_warriors_2` y `samurai_warriors_2_SW2XL_US` se conservan porque forman parte de la ABI y del código generado de ReXGlue. El nombre público del repositorio, el bundle y la documentación es `sw2xl-recomp`.
 
-## Requirements
+## Requisitos
 
-- ReXGlue SDK 0.10.0 for Windows AMD64 or Linux AMD64
-- Visual Studio 2026 Community with the C++ toolchain (Windows)
-- LLVM/Clang, CMake 3.25 or newer, and Ninja
-- An extracted USA/Europe copy of Samurai Warriors 2
-- The matching Title Update #3 files
-- A legally obtained Samurai Warriors 2 XL content package
+- ReXGlue SDK 0.10.0 para Windows AMD64 o Linux AMD64.
+- Visual Studio 2026 Community con C++ (Windows), LLVM/Clang, CMake 3.25+ y Ninja.
+- Una extracción legal de **Samurai Warriors 2 (USA, Europe)**.
+- Los archivos de **Title Update #3** correspondientes a esa versión.
+- `SW2XL_US.dll` y paquetes STFS (`LIVE`, `PIRS` o `CON`) de una copia legal de **Samurai Warriors 2: Xtreme Legends**.
 
-Expected layout:
+## Estructura requerida
+
+Renombra el directorio de este repositorio a `sw2xl-recomp` y déjalo junto al SDK y los archivos extraídos:
 
 ```text
 rexglue-sdk-win-amd64/
@@ -23,290 +24,103 @@ rexglue-sdk-win-amd64/
 ├── include/
 ├── lib/
 ├── Samurai Warriors 2 (USA, Europe)/
-│   ├── default.xex
-│   ├── SW2XL_US.dll
+│   ├── default.xex                         # juego base
+│   ├── SW2XL_US.dll                        # módulo XL
 │   └── Samurai Warriors 2 Title Update #3/
-│       ├── default.xex
+│       ├── default.xex                      # actualización aplicada al arrancar
 │       └── default.xexp
-└── sw2-recomp/
+└── sw2xl-recomp/
 ```
 
-`build.ps1` expects Visual Studio at `C:\Program Files\Microsoft Visual Studio\18\Community`. Adjust `$vsRoot` in that script if Visual Studio is installed elsewhere.
+No reemplaces el `default.xex` de la raíz: el manifiesto conserva el juego base como raíz de datos y selecciona el `default.xex` junto a `default.xexp` para generar y cargar Title Update #3.
 
-## Build and run
+## Preparar juego, actualización y XL
 
-From the SDK root:
+1. Extrae el juego base en `Samurai Warriors 2 (USA, Europe)`.
+2. Copia `default.xex` y `default.xexp` de Title Update #3 a `Samurai Warriors 2 Title Update #3` dentro de esa carpeta.
+3. Copia `SW2XL_US.dll` a la raíz de `Samurai Warriors 2 (USA, Europe)`.
+4. Conserva los contenedores XL STFS en cualquier carpeta local; se importan después de compilar y no se modifican en origen.
+
+## Compilar y ejecutar (Windows)
+
+Desde la raíz del SDK:
 
 ```powershell
-.\sw2-recomp\build.ps1
-.\sw2-recomp\run.ps1
+.\sw2xl-recomp\build.ps1
+.\sw2xl-recomp\run.ps1
 ```
 
-The Release executable is written to `sw2-recomp/out/build/win-amd64-release/samurai_warriors_2.exe`.
+El ejecutable resultante sigue llamándose `samurai_warriors_2.exe` por compatibilidad con el código generado y queda en `sw2xl-recomp/out/build/win-amd64-release/`.
 
-### Linux Bash scripts
+`build.ps1` espera Visual Studio en `C:\Program Files\Microsoft Visual Studio\18\Community`. Ajusta `$vsRoot` si tu instalación está en otra ruta.
 
-The PowerShell launchers remain available for Windows. On Linux, use their Bash
-counterparts from the SDK root:
+El launcher usa ventana, XInput, emulación teclado/ratón, RTV/DSV y rutas locales de datos por defecto. Puedes sobrescribir opciones:
+
+```powershell
+.\sw2xl-recomp\run.ps1 --fullscreen
+.\sw2xl-recomp\run.ps1 --input_backend sdl --no-mnk_mode
+.\sw2xl-recomp\run.ps1 --log_level info
+```
+
+## Instalar contenido Xtreme Legends
+
+Primero compila. Luego importa los contenedores STFS de XL a los datos locales:
+
+```powershell
+.\sw2xl-recomp\install-dlc.ps1 --dlc-root 'D:\Samurai Warriors 2 XL'
+```
+
+También se acepta la sintaxis nativa de PowerShell:
+
+```powershell
+.\sw2xl-recomp\install-dlc.ps1 -DlcRoot 'D:\Samurai Warriors 2 XL'
+```
+
+El importador busca contenedores `LIVE`, `PIRS` y `CON`, los instala mediante el gestor de contenido de ReXGlue en `sw2xl-recomp/userdata`, y nunca altera los paquetes de origen. Ejecuta `run.ps1` normalmente después de la importación.
+
+## Datos locales y bundle
+
+| Datos | Ubicación predeterminada |
+| --- | --- |
+| Partidas, perfiles y contenido XL instalado | `sw2xl-recomp/userdata` |
+| Caché de shaders | `sw2xl-recomp/cache` |
+
+Para un bundle de pruebas autocontenido:
+
+```powershell
+.\sw2xl-recomp\package.ps1
+.\sw2xl-recomp\package.ps1 -Zip
+```
+
+El resultado predeterminado es `sw2xl-recomp/dist/sw2xl-test-bundle`.
+
+## Linux
+
+Desde la raíz del SDK:
 
 ```bash
-./sw2-recomp/build.sh
-./sw2-recomp/run.sh
+./sw2xl-recomp/build.sh
+./sw2xl-recomp/install-dlc.sh --dlc-root '/path/to/Samurai Warriors 2 XL'
+./sw2xl-recomp/run.sh
 ```
 
-The Linux Release executable is written to
-`sw2-recomp/out/build/linux-amd64-release/samurai_warriors_2`. The Bash launcher
-uses SDL input, the Vulkan FBO render-target path, `LD_LIBRARY_PATH`, and the
-same local user-data and cache directories as the Windows launcher.
+El binario Linux es `out/build/linux-amd64-release/samurai_warriors_2`. Hay scripts adicionales para PGO, bundle y comparación de rutas Vulkan: `build-pgo-*.sh`, `run-pgo-training.sh`, `package.sh`, `run-fbo.sh` y `run-fsi.sh`.
 
-The remaining Bash entrypoints are:
+## Notas técnicas
 
-```bash
-./sw2-recomp/build-pgo-instrumented.sh
-./sw2-recomp/run-pgo-training.sh
-./sw2-recomp/build-pgo-optimized.sh
-./sw2-recomp/run-fbo.sh
-./sw2-recomp/run-fsi.sh
-./sw2-recomp/install-dlc.sh --dlc-root '/path/to/Samurai Warriors 2 XL'
-./sw2-recomp/package.sh --zip
-```
+- La corrección de despacho XL se aplica tras codegen con `patch-xl-codegen.ps1`/`.sh`.
+- La sincronización de eventos del juego base y XL está en `src/event_fix.cpp`.
+- `samurai_warriors_2_manifest.toml` describe el juego base, la actualización y el módulo XL. No renombres sus destinos generados manualmente.
+- `crash-investigation.md` conserva el análisis técnico del arreglo de eventos.
 
-Run `./sw2-recomp/package.sh --help` for the Bash packaging options.
+## Archivos principales
 
-The manifest points to the `default.xex` stored beside `default.xexp`. ReXGlue therefore applies Title Update #3 during code generation, making the generated code correspond to version **0.0.3.3**. The original root-level `default.xex` remains unchanged.
-
-`SW2XL_US.dll` is compiled as a separate module named `samurai_warriors_2_SW2XL_US.dll`. Additional function boundaries found during analysis are stored in `sw2xl_us_config.toml`.
-
-The launcher defaults to windowed mode, XInput, keyboard emulation, `warn` logging, and local data directories. Explicit options override those defaults:
-
-```powershell
-.\sw2-recomp\run.ps1 --fullscreen
-.\sw2-recomp\run.ps1 --input_backend sdl --no-mnk_mode
-.\sw2-recomp\run.ps1 --log_level info
-```
-
-### Comparing the D3D12 render-target paths
-
-The normal launcher explicitly selects RTV/DSV because it performs much better
-with Samurai Warriors 2 on the tested system. Two convenience launchers select
-either path for performance and graphics comparisons:
-
-```powershell
-.\sw2-recomp\run-rtv.ps1
-.\sw2-recomp\run-rov.ps1
-```
-
-ROV is generally slower in the current ReXGlue implementation, but remains
-available for diagnostics or GPUs where RTV produces rendering problems. If ROV
-is needed, launch the game with `run-rov.ps1`.
-
-### Profile-guided optimization
-
-PGO lets Clang optimize the generated guest code around paths observed during
-real gameplay. Create the instrumented build first:
-
-```powershell
-.\sw2-recomp\build-pgo-instrumented.ps1
-```
-
-Train that build with the dedicated launcher:
-
-```powershell
-.\sw2-recomp\run-pgo-training.ps1
-```
-
-During training, let the intro play, navigate representative menus, and play at
-least one busy stage with XL enabled. Exit the game normally so every loaded
-module writes its profile. The launcher may be run several times; each run adds
-another raw profile. Then merge the profiles and build the optimized version:
-
-```powershell
-.\sw2-recomp\build-pgo-optimized.ps1
-.\sw2-recomp\run.ps1
-```
-
-The raw and merged profiles remain in `sw2-recomp/pgo` and are excluded from
-Git. Running the regular `build.ps1` later switches PGO off and produces the
-normal optimized build again.
-
-The current PGO build was trained with two raw profiles covering the executable
-and the XL module. They were merged into `pgo/sw2.profdata`, and all 149 project
-compile rules consumed the merged profile. Clang reported a few unprofiled
-launcher or unused guest-code files and one stale function record; those records
-were ignored while the remaining profile data was applied normally. The final
-PGO build was tested with working audio.
-
-Profiles are tied to the generated source that produced them. Generate new
-profiles after changing hooks, function boundaries, the title update, the XL
-dispatcher patch, or generated guest code.
-
-### Release optimization settings
-
-Release builds apply these project-level optimizations without modifying the
-installed ReXGlue SDK or `rexgpu-xenos.dll`:
-
-- `-O3` for the executable, base guest code, and XL guest code
-- `-DNDEBUG` to disable release assertions
-- ThinLTO (`-flto=thin`) during compilation and final linking
-- `/OPT:REF` and `/OPT:ICF` during linking to remove and fold unused code
-- Optional Clang instrumentation PGO through the scripts above
-
-`-march=native` is intentionally not enabled, so normal and PGO builds remain
-portable across compatible Windows AMD64 computers.
-
-Boolean options use flags such as `--fullscreen` and `--no-fullscreen`.
-
-## Controller and keyboard input
-
-Keyboard and mouse controller emulation is enabled through `--mnk_mode` and is combined with the physical XInput controller for player one.
-
-| Xbox 360 input | Default keyboard or mouse input |
+| Archivo | Propósito |
 | --- | --- |
-| Left stick | W, A, S, D |
-| A | Space |
-| B | C |
-| X | E |
-| Y | F |
-| LB / RB | Q / R |
-| LT / RT | Right / left mouse button |
-| D-pad | Arrow keys |
-| Start / Back | Enter / Tab |
-| Left / right stick press | Shift / middle mouse button |
-| Right stick | Mouse movement |
-
-The window must have focus for keyboard input. Bindings can be changed at launch:
-
-```powershell
-.\sw2-recomp\run.ps1 --keybind_b V --keybind_left_shoulder Z
-```
-
-## Saves, profiles, DLC, and cache locations
-
-Runtime data is kept outside OneDrive by default:
-
-| Data | Default location |
-| --- | --- |
-| Saves, profiles, and installed content | `sw2-recomp/userdata` |
-| Shader cache | `sw2-recomp/cache` |
-
-Both directories are excluded from Git. Custom locations can be selected at launch:
-
-```powershell
-.\sw2-recomp\run.ps1 `
-  --user_data_root 'D:\Games\SW2\userdata' `
-  --cache_root 'D:\Games\SW2\cache'
-```
-
-## Install Xtreme Legends content
-
-The installer searches `D:\Samurai Warriors 2 XL` by default:
-
-```powershell
-.\sw2-recomp\install-dlc.ps1
-```
-
-To select another source directory:
-
-```powershell
-.\sw2-recomp\install-dlc.ps1 -DlcRoot 'D:\Other Folder\Samurai Warriors 2 XL'
-```
-
-The installer scans for `LIVE`, `PIRS`, and `CON` STFS containers and installs them through ReXGlue's content manager. Installed packages remain under the configured user-data directory, and the original source packages are not modified.
-
-## Create a portable test bundle
-
-Create a self-contained private-testing directory with the executable, XL host
-module, ReXGlue runtime, Xenos plugin, game data, local saves, DLC, and cache
-layout:
-
-```powershell
-.\sw2-recomp\package.ps1
-```
-
-Use `-Zip` to also create an archive, or omit large local data selectively:
-
-```powershell
-.\sw2-recomp\package.ps1 -Zip
-.\sw2-recomp\package.ps1 -SkipGameData -SkipUserData
-```
-
-The output is written to `sw2-recomp/dist/sw2-test-bundle` and is excluded from
-Git. Deleting bundle `userdata` removes its saves and installed XL content; it
-does not remove the compiled Title Update hooks or code patches.
-
-## Project changes
-
-### Graphics plugin deployment
-
-`CMakeLists.txt` calls `rexglue_setup_target(... GPU_PLUGINS xenos)` so the Xenos plugin and its dependencies are placed beside the executable.
-
-The launcher forces the D3D12 RTV/DSV render-target path after direct comparison
-showed it to be substantially faster than ROV for this game. `run-rov.ps1`
-remains available for compatibility testing.
-
-### XL indirect-dispatch correction
-
-The XL function at `0x8819C710` uses a scaled jump-table index. ReXGlue emits
-unscaled switch cases for this pattern, so `patch-xl-codegen.ps1` changes the
-generated cases to `0, 4, 8, ... 32` after code generation. The corresponding
-nine destinations are documented in `sw2xl_us_config.toml`, and CMake makes the
-XL host module depend on this idempotent patch step.
-
-### Resolved: crash shortly after entering a stage
-
-The original recompilation could close roughly five seconds after entering a stage, regardless of the selected character. Investigation traced the crash to repeated audio cleanup caused by an event-state mismatch.
-
-The game clears an event by resetting its guest-memory `SignalState`, while ReXGlue also tracks a host event. Hooks at `0x82113BCC` (Title Update #3) and `0x88103BE4` (SW2XL) call `sw2_clear_host_event` after the original instruction to synchronize both states. The implementation is in `src/event_fix.cpp` and preserves the game's original instructions.
-
-The standalone test in `tests/event_reset_test.cpp` reproduces the state mismatch, verifies `Clear()`, and exercises repeated signal-and-clear cycles. Playtesting progressed from repeatable crashes within seconds to completing a full stage, and later XL gameplay also reached and ran stages with the fix enabled.
-
-### Optional diagnostics
-
-Heap and input diagnostics are disabled by default. They can be enabled for a diagnostic run:
-
-```powershell
-$env:SW2_HEAP_DIAGNOSTICS = '1'
-$env:SW2_INPUT_DIAGNOSTICS = '1'
-.\sw2-recomp\run.ps1 --log_level info
-```
-
-Remove the variables before a normal launch:
-
-```powershell
-Remove-Item Env:SW2_HEAP_DIAGNOSTICS -ErrorAction SilentlyContinue
-Remove-Item Env:SW2_INPUT_DIAGNOSTICS -ErrorAction SilentlyContinue
-```
-
-These tools collect diagnostic information. They do not remap, buffer, inject, or otherwise change controller input.
-
-## Main files
-
-| File or directory | Purpose |
-| --- | --- |
-| `CMakeLists.txt` | Executable sources, Xenos deployment, Release optimization, PGO modes, and linker maps |
-| `CMakePresets.json` | Windows and Linux AMD64 build presets |
-| `samurai_warriors_2_manifest.toml` | Game, Title Update, and XL module inputs |
-| `samurai_warriors_2_config.toml` | Base executable functions and hooks |
-| `sw2xl_us_config.toml` | XL module function configuration |
-| `build.ps1` | Release build launcher |
-| `build-pgo-instrumented.ps1` | Builds binaries that collect Clang PGO profiles |
-| `run-pgo-training.ps1` | Runs the instrumented game and stores per-module profiles |
-| `build-pgo-optimized.ps1` | Merges profiles and builds the PGO-optimized binaries |
-| `run.ps1` | Game launcher and local runtime-data defaults |
-| `run-rtv.ps1` / `run-rov.ps1` | Forces a D3D12 render-target path for comparison |
-| `package.ps1` | Creates a portable private-testing bundle, optionally as a ZIP |
-| `patch-xl-codegen.ps1` | Corrects scaled XL dispatch cases after code generation |
-| `install-dlc.ps1` | STFS content importer |
-| `build.sh` / `build-pgo-*.sh` | Linux Release and PGO build launchers |
-| `run.sh` / `run-pgo-training.sh` | Linux game and PGO training launchers |
-| `run-fbo.sh` / `run-fsi.sh` | Linux Vulkan render-target path launchers |
-| `package.sh` / `install-dlc.sh` | Linux bundle creator and STFS content importer |
-| `patch-xl-codegen.sh` | Linux XL code-generation patch |
-| `src/event_fix.cpp` | Host and guest event synchronization |
-| `src/dlc_installer.cpp` | Runtime DLC installation |
-| `src/heap_diagnostics.cpp` | Optional heap diagnostics |
-| `src/input_diagnostics.cpp` | Optional controller polling diagnostics |
-| `generated/` | ReXGlue-generated source |
-| `out/` | Local builds, dependencies, maps, and logs |
-
-Further technical notes are available in [crash-investigation.md](crash-investigation.md).
+| `build.ps1` / `build.sh` | Compilación Release de sw2xl-recomp |
+| `run.ps1` / `run.sh` | Lanzador con rutas de datos locales |
+| `install-dlc.ps1` / `install-dlc.sh` | Importación de contenido XL STFS |
+| `package.ps1` / `package.sh` | Bundle portátil de pruebas XL |
+| `samurai_warriors_2_manifest.toml` | Entrypoint actualizado y módulo XL |
+| `sw2xl_us_config.toml` | Configuración de funciones del módulo XL |
+| `src/dlc_installer.cpp` | Instalador de contenido en tiempo de ejecución |

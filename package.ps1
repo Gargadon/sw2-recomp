@@ -1,5 +1,5 @@
 param(
-    [string]$OutputDir = (Join-Path $PSScriptRoot 'dist\sw2-test-bundle'),
+    [string]$OutputDir = (Join-Path $PSScriptRoot 'dist\sw2xl-test-bundle'),
     [switch]$SkipGameData,
     [switch]$SkipUserData,
     [switch]$Zip,
@@ -76,7 +76,7 @@ try {
 [IO.File]::WriteAllText((Join-Path $output 'run.ps1'), $launcher, [Text.UTF8Encoding]::new($false))
 
 $notes = @'
-# Samurai Warriors 2 test bundle
+# Samurai Warriors 2: Xtreme Legends test bundle
 
 Run `run.ps1` from PowerShell. Runtime data, DLC, saves, shader cache, and logs
 remain inside this directory. The bundle contains local game data and is meant

@@ -5,7 +5,7 @@ script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 sdk_root=$(dirname -- "$script_dir")
 build_dir="$script_dir/out/build/linux-amd64-release"
 game_dir="$sdk_root/Samurai Warriors 2 (USA, Europe)"
-output="$script_dir/dist/sw2-test-bundle"
+output="$script_dir/dist/sw2xl-test-bundle"
 skip_game_data=false
 skip_user_data=false
 make_zip=false
@@ -48,7 +48,7 @@ fi
 mkdir -p -- "$output/cache"
 
 cp -- "$script_dir/run-bundle.sh" "$output/run.sh"
-printf '%s\n' '# Samurai Warriors 2 test bundle' '' \
+printf '%s\n' '# Samurai Warriors 2: Xtreme Legends test bundle' '' \
     'Run `./run.sh` from Bash. Runtime data, DLC, saves, shader cache, and logs' \
     'remain inside this directory. The bundle contains local game data and is meant' \
     'for private testing.' > "$output/README.md"

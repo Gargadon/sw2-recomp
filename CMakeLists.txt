@@ -1,9 +1,9 @@
-# samurai_warriors_2 - ReXGlue Recompiled Project
+# sw2xl-recomp - Samurai Warriors 2: Xtreme Legends for ReXGlue
 #
 # SDK boilerplate lives in generated/rexglue.cmake.
 
 cmake_minimum_required(VERSION 3.25)
-project(samurai_warriors_2 LANGUAGES CXX)
+project(sw2xl_recomp LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -13,7 +13,39 @@ set_property(CACHE SW2_PGO PROPERTY STRINGS OFF GENERATE USE)
 set(SW2_PGO_PROFILE "${CMAKE_CURRENT_SOURCE_DIR}/pgo/sw2.profdata" CACHE FILEPATH
     "Merged Clang instrumentation profile used when SW2_PGO=USE")
 
+# The generated base-game target and the XL module retain these identifiers:
+# they are part of the ReXGlue-generated ABI, not this project's public name.
+if(NOT DEFINED REXGLUE_HOST_TARGET)
+    set(REXGLUE_HOST_TARGET samurai_warriors_2)
+endif()
 include(generated/rexglue.cmake)
+
+# Git for Windows can check out the cabextract compatibility symlinks in
+# libmspack as plain text files when symlink support is unavailable.  Use the
+# canonical sources that those links reference, without changing the SDK
+# checkout.  A normal symlink-capable checkout keeps the SDK's default setup.
+if(REXSDK_DIR AND TARGET mspack)
+    set(sw2_mspack_cabextract_dir
+        "${REXSDK_DIR}/thirdparty/libmspack/cabextract/mspack")
+    set(sw2_mspack_canonical_dir
+        "${REXSDK_DIR}/thirdparty/libmspack/libmspack/mspack")
+    set(sw2_mspack_link_stub "${sw2_mspack_cabextract_dir}/lzxd.c")
+
+    if(EXISTS "${sw2_mspack_canonical_dir}/lzxd.c" AND EXISTS "${sw2_mspack_link_stub}")
+        file(READ "${sw2_mspack_link_stub}" sw2_mspack_link_contents LIMIT 256)
+        if(sw2_mspack_link_contents MATCHES
+                "^[ \t\r\n]*\\.\\./\\.\\./libmspack/mspack/lzxd\\.c[ \t\r\n]*$")
+            # The SDK target contains exactly this one source.  Replacing its
+            # source list is necessary because CMake has already created the
+            # target by the time this project can inspect the checkout.
+            set_property(TARGET mspack PROPERTY SOURCES
+                "${sw2_mspack_canonical_dir}/lzxd.c")
+            target_include_directories(mspack BEFORE PUBLIC
+                "$<BUILD_INTERFACE:${sw2_mspack_canonical_dir}>")
+            message(STATUS "Using canonical libmspack sources (SDK symlinks unavailable)")
+        endif()
+    endif()
+endif()
 
 # The source-tree ReXGlue SDK uses SSSE3 byte-shuffle intrinsics in the core,
 # XMA audio, and Xenos graphics targets. Apply the required AMD64 feature from
@@ -44,6 +76,13 @@ else()
 endif()
 
 rexglue_setup_target(samurai_warriors_2 GPU_PLUGINS xenos)
+
+# rex::runtime uses ImGui privately, but the host target also compiles runtime
+# UI sources and includes rex/ui/style.h.  Propagate ImGui's public include
+# directory to that compilation without changing the SDK's CMake files.
+if(TARGET imgui)
+    target_link_libraries(samurai_warriors_2 PRIVATE imgui)
+endif()
 
 # The installed SDK toolchain leaves CMAKE_CXX_FLAGS_RELEASE empty. Generated
 # guest code is prohibitively slow without compiler optimization, affecting

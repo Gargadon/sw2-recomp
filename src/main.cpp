@@ -1,4 +1,4 @@
-// samurai_warriors_2 - ReXGlue Recompiled Project
+// sw2xl-recomp - Samurai Warriors 2: Xtreme Legends for ReXGlue
 
 #include "generated/default/samurai_warriors_2_init.h"
 

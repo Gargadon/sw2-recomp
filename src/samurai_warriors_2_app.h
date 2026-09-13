@@ -1,4 +1,4 @@
-// samurai_warriors_2 - ReXGlue Recompiled Project
+// sw2xl-recomp - Samurai Warriors 2: Xtreme Legends for ReXGlue
 //
 // Customize your app by overriding virtual hooks from rex::ReXApp.
 
