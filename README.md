@@ -8,8 +8,8 @@ The original ReXGlue SDK binaries are unchanged. Project-specific fixes, diagnos
 
 ## Requirements
 
-- ReXGlue SDK 0.10.0 for Windows AMD64
-- Visual Studio 2026 Community with the C++ toolchain
+- ReXGlue SDK 0.10.0 for Windows AMD64 or Linux AMD64
+- Visual Studio 2026 Community with the C++ toolchain (Windows)
 - LLVM/Clang, CMake 3.25 or newer, and Ninja
 - An extracted USA/Europe copy of Samurai Warriors 2
 - The matching Title Update #3 files
@@ -43,6 +43,35 @@ From the SDK root:
 ```
 
 The Release executable is written to `sw2-recomp/out/build/win-amd64-release/samurai_warriors_2.exe`.
+
+### Linux Bash scripts
+
+The PowerShell launchers remain available for Windows. On Linux, use their Bash
+counterparts from the SDK root:
+
+```bash
+./sw2-recomp/build.sh
+./sw2-recomp/run.sh
+```
+
+The Linux Release executable is written to
+`sw2-recomp/out/build/linux-amd64-release/samurai_warriors_2`. The Bash launcher
+uses SDL input, the Vulkan FBO render-target path, `LD_LIBRARY_PATH`, and the
+same local user-data and cache directories as the Windows launcher.
+
+The remaining Bash entrypoints are:
+
+```bash
+./sw2-recomp/build-pgo-instrumented.sh
+./sw2-recomp/run-pgo-training.sh
+./sw2-recomp/build-pgo-optimized.sh
+./sw2-recomp/run-fbo.sh
+./sw2-recomp/run-fsi.sh
+./sw2-recomp/install-dlc.sh --dlc-root '/path/to/Samurai Warriors 2 XL'
+./sw2-recomp/package.sh --zip
+```
+
+Run `./sw2-recomp/package.sh --help` for the Bash packaging options.
 
 The manifest points to the `default.xex` stored beside `default.xexp`. ReXGlue therefore applies Title Update #3 during code generation, making the generated code correspond to version **0.0.3.3**. The original root-level `default.xex` remains unchanged.
 
@@ -255,7 +284,7 @@ These tools collect diagnostic information. They do not remap, buffer, inject, o
 | File or directory | Purpose |
 | --- | --- |
 | `CMakeLists.txt` | Executable sources, Xenos deployment, Release optimization, PGO modes, and linker maps |
-| `CMakePresets.json` | Windows AMD64 build presets |
+| `CMakePresets.json` | Windows and Linux AMD64 build presets |
 | `samurai_warriors_2_manifest.toml` | Game, Title Update, and XL module inputs |
 | `samurai_warriors_2_config.toml` | Base executable functions and hooks |
 | `sw2xl_us_config.toml` | XL module function configuration |
@@ -268,6 +297,11 @@ These tools collect diagnostic information. They do not remap, buffer, inject, o
 | `package.ps1` | Creates a portable private-testing bundle, optionally as a ZIP |
 | `patch-xl-codegen.ps1` | Corrects scaled XL dispatch cases after code generation |
 | `install-dlc.ps1` | STFS content importer |
+| `build.sh` / `build-pgo-*.sh` | Linux Release and PGO build launchers |
+| `run.sh` / `run-pgo-training.sh` | Linux game and PGO training launchers |
+| `run-fbo.sh` / `run-fsi.sh` | Linux Vulkan render-target path launchers |
+| `package.sh` / `install-dlc.sh` | Linux bundle creator and STFS content importer |
+| `patch-xl-codegen.sh` | Linux XL code-generation patch |
 | `src/event_fix.cpp` | Host and guest event synchronization |
 | `src/dlc_installer.cpp` | Runtime DLC installation |
 | `src/heap_diagnostics.cpp` | Optional heap diagnostics |

@@ -11,7 +11,7 @@ Get-ChildItem -LiteralPath $profileDir -Filter '*.profraw' -File -ErrorAction Si
 
 Push-Location $PSScriptRoot
 try {
-    cmake --preset win-amd64-release "-DCMAKE_PREFIX_PATH=$sdkRoot" -DSW2_PGO=GENERATE
+    cmake --preset win-amd64-release "-DREXSDK_DIR=$sdkRoot" -DSW2_PGO=GENERATE
     if ($LASTEXITCODE -ne 0) { throw 'PGO instrumentation configuration failed.' }
     cmake --build --preset win-amd64-release -j 6
     if ($LASTEXITCODE -ne 0) { throw 'PGO instrumentation build failed.' }

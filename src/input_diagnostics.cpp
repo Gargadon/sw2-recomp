@@ -4,14 +4,13 @@
 #include <rex/logging.h>
 #include <chrono>
 #include <algorithm>
-#include <Windows.h>
+#include <cstdlib>
 
 namespace {
 bool InputDiagnosticsEnabled() {
   static const bool enabled = [] {
-    char value[2]{};
-    return GetEnvironmentVariableA("SW2_INPUT_DIAGNOSTICS", value, sizeof(value)) == 1
-        && value[0] == '1';
+    const char* value = std::getenv("SW2_INPUT_DIAGNOSTICS");
+    return value && value[0] == '1' && value[1] == '\0';
   }();
   return enabled;
 }

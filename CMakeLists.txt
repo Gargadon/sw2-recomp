@@ -15,6 +15,19 @@ set(SW2_PGO_PROFILE "${CMAKE_CURRENT_SOURCE_DIR}/pgo/sw2.profdata" CACHE FILEPAT
 
 include(generated/rexglue.cmake)
 
+# The source-tree ReXGlue SDK uses SSSE3 byte-shuffle intrinsics in the core,
+# XMA audio, and Xenos graphics targets. Apply the required AMD64 feature from
+# this project, leaving the SDK checkout unmodified. These concrete targets
+# exist only when REXSDK_DIR is used; an installed SDK supplies its own
+# compile settings.
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "AMD64|x86_64")
+    foreach(sw2_sdk_target IN ITEMS rexcore rexaudio rexgpu-xenos)
+        if(TARGET ${sw2_sdk_target})
+            target_compile_options(${sw2_sdk_target} PRIVATE -mssse3)
+        endif()
+    endforeach()
+endif()
+
 # Sources
 set(SAMURAIWARRIORS2_SOURCES
     src/main.cpp
@@ -65,22 +78,34 @@ endforeach()
 foreach(sw2_link_target IN ITEMS samurai_warriors_2 samurai_warriors_2_SW2XL_US)
     if(TARGET ${sw2_link_target})
         target_link_options(${sw2_link_target} PRIVATE
-            $<$<CONFIG:Release>:-flto=thin>
-            $<$<CONFIG:Release>:-Wl,/OPT:REF>
-            $<$<CONFIG:Release>:-Wl,/OPT:ICF>
-        )
+            $<$<CONFIG:Release>:-flto=thin>)
+        if(WIN32)
+            target_link_options(${sw2_link_target} PRIVATE
+                $<$<CONFIG:Release>:-Wl,/OPT:REF>
+                $<$<CONFIG:Release>:-Wl,/OPT:ICF>)
+        endif()
     endif()
 endforeach()
 
-if(WIN32 AND TARGET samurai_warriors_2_SW2XL_US)
+if(TARGET samurai_warriors_2_SW2XL_US)
     target_sources(samurai_warriors_2_SW2XL_US PRIVATE src/event_fix.cpp)
-    add_custom_target(sw2_patch_xl_codegen
-        COMMAND powershell -NoProfile -ExecutionPolicy Bypass
-            -File "${CMAKE_CURRENT_SOURCE_DIR}/patch-xl-codegen.ps1"
-        DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/generated/sw2xl_us/samurai_warriors_2_init.cpp"
-        VERBATIM
-    )
+    if(WIN32)
+        add_custom_target(sw2_patch_xl_codegen
+            COMMAND powershell -NoProfile -ExecutionPolicy Bypass
+                -File "${CMAKE_CURRENT_SOURCE_DIR}/patch-xl-codegen.ps1"
+            DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/generated/sw2xl_us/samurai_warriors_2_init.cpp"
+            VERBATIM)
+    else()
+        add_custom_target(sw2_patch_xl_codegen
+            COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/patch-xl-codegen.sh"
+            DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/generated/sw2xl_us/samurai_warriors_2_init.cpp"
+            VERBATIM)
+    endif()
+    # Codegen rewrites module_registry.cpp. Ensure this project-side patch
+    # always runs after it, rather than racing its generated outputs.
+    add_dependencies(sw2_patch_xl_codegen samurai_warriors_2_codegen)
     add_dependencies(samurai_warriors_2_SW2XL_US sw2_patch_xl_codegen)
+    add_dependencies(samurai_warriors_2 sw2_patch_xl_codegen)
 endif()
 
 # Retain native function addresses for diagnosing Windows crash dumps.

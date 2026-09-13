@@ -3,15 +3,15 @@
 [project]
 name = "samurai_warriors_2"
 sdk_version = "0.10.0"
-game_root = "../samurai warriors 2 (usa, europe)"
+game_root = "../Samurai Warriors 2 (USA, Europe)"
 
 [entrypoint]
-file_path = "../samurai warriors 2 (usa, europe)/samurai warriors 2 title update #3/default.xex"
+file_path = "../Samurai Warriors 2 (USA, Europe)/Samurai Warriors 2 Title Update #3/default.xex"
 out_directory_path = "generated/default"
 includes = ["samurai_warriors_2_config.toml"]
 
 [[modules]]
 guest_path = "SW2XL_US.dll"
-file_path = "../samurai warriors 2 (usa, europe)/SW2XL_US.dll"
+file_path = "../Samurai Warriors 2 (USA, Europe)/SW2XL_US.dll"
 out_directory_path = "generated/sw2xl_us"
 includes = ["sw2xl_us_config.toml"]
